@@ -1,0 +1,6 @@
+[4] Na pista 6 o carro 2 atropelou a galinha na posicao (10,16).
+[8] Na pista 5 o carro 2 atropelou a galinha na posicao (10,13).
+[17] Na pista 5 o carro 1 atropelou a galinha na posicao (10,13).
+[21] Na pista 5 o carro 1 atropelou a galinha na posicao (10,13).
+[25] Na pista 6 o carro 2 atropelou a galinha na posicao (10,16).
+[25] Fim de jogo

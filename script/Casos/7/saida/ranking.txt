@@ -1,0 +1,2 @@
+id_pista,id_carro,iteracao
+2,7,11

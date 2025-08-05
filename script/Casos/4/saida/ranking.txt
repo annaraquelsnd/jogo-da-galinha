@@ -1,0 +1,3 @@
+id_pista,id_carro,iteracao
+3,3,2
+3,4,5
