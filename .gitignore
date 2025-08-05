@@ -1,0 +1,22 @@
+# Arquivo oculto do macOS
+.DS_Store
+outprog/
+
+# Arquivo executável do seu projeto
+prog
+
+# Outros executáveis comuns em C (caso mude o nome futuramente)
+a.out
+*.out
+*.exe
+
+# Pastas temporárias e de compilação (caso venha a usar)
+build/
+bin/
+tmp/
+*.dSYM/
+
+# Arquivos temporários de editores
+*~
+*.swp
+*.bak
