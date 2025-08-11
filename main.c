@@ -4,6 +4,9 @@ typedef struct {
     int posicao;
 } tCarro;
 
+tCarro InstanciarCarro(int posicao);
+int ObtemPosicaoCarro(tCarro carro);
+
 typedef struct {
     char direcao;
     int velocidade;
@@ -13,6 +16,12 @@ typedef struct {
 
 } tPista;
 
+tPista InstanciarPista(char direcao, int velocidade, int num_carros, tCarro carros[]);
+
+char ObtemDirecaoPista(tPista pista);
+int ObtemVelocidadePista(tPista pista);
+int ObtemNumCarrosPista(tPista pista);
+
 typedef struct {
     int x;
     int y; 
@@ -20,6 +29,10 @@ typedef struct {
 
 } tGalinha;
 
+tGalinha InstanciarGalinha(int x, int y, int vidas);
+int ObtemXGalinha(tGalinha galinha);
+int ObtemYGalinha(tGalinha galinha);
+int ObtemVidasGalinha(tGalinha galinha);
 
 typedef struct {
     int animacao;
@@ -37,6 +50,7 @@ typedef struct {
 } tJogo;
 
 tJogo LerJogo(FILE * config, FILE * personagens);
+void ImprimirMapaJogo(tJogo jogo);
 
 void Debugar(tJogo jogo);
 
@@ -72,10 +86,11 @@ int main(int argc, char * argv[]){
     fclose(configFile);
     fclose(personagensFile);
     Debugar(jogo);
+    ImprimirMapaJogo(jogo);
     
     return 0;
 }
-
+// Funções de tJogo:
 void Debugar(tJogo jogo){
     int i = 0, j = 0, c = 0;
 
@@ -113,17 +128,69 @@ void Debugar(tJogo jogo){
 
 }
 
+void ImprimirMapaJogo(tJogo jogo){
+    int i = 0, j = 0, i_pistas = 0, j_carros = 0;
+    char mapaAtual[(jogo.qtd_pistas*3)-1][jogo.largura_mapa];
+
+    // Copiando mapa para ser alterado localmente:
+    for (i = 0; i < (jogo.qtd_pistas*3)-1; i++) {
+        for (j = 0; j < jogo.largura_mapa; j++) {
+            mapaAtual[i][j] = jogo.mapa[i][j];
+        }
+    }
+    
+    // Alterando a cópia do mapa com os elementos nas posições atuais:
+
+    // Percorrer pistas e ler os carros:
+    for (i_pistas = 0; i_pistas < jogo.qtd_pistas-1; i_pistas++) {
+        // Verificar se pista é vazia:
+        if (jogo.pistas[i_pistas].direcao != '0') {
+            for (j_carros = 0; j_carros < jogo.pistas[i_pistas].num_carros; j_carros++) {
+                /* code */
+            }
+        }
+    }
+    
+
+
+    printf("|");
+    for (j = 0; j < jogo.largura_mapa; j++) {
+        printf("-");
+    }
+    printf("|\n");
+    
+    for (i = 0; i < (jogo.qtd_pistas*3)-1; i++) {
+        printf("|");
+        for (j = 0; j < jogo.largura_mapa; j++) {
+            printf("%c", mapaAtual[i][j]);
+        }
+        printf("|\n");
+    }
+
+    printf("|");
+    for (j = 0; j < jogo.largura_mapa; j++) {
+        printf("-");
+    }
+    printf("|\n");
+    
+}
+
 tJogo LerJogo(FILE * config, FILE * personagens){
     tJogo jogo;
     int i = 0, j = 0, c = 0;
-    char inicioLinha;
+    char inicioLinha, direcao = 0;
+    int velocidade = 0, num_carros = 0, posicao_carro = 0;
+    tCarro carros[10];
+    int x = 0, y = 0, vidas = 0;
 
     fscanf(config, "%d", &jogo.animacao);
     fscanf(config, "%d %d", &jogo.largura_mapa, &jogo.qtd_pistas);
 
-    jogo.pistas[i].direcao = '0';
-    jogo.pistas[i].num_carros = -1;
-    jogo.pistas[i].velocidade = -1;
+    // Primeira pista vazia
+    direcao = '0';
+    num_carros = -1;
+    velocidade = -1;
+    jogo.pistas[i] = InstanciarPista(direcao, velocidade, num_carros, carros);
 
     for (i = 1; i < jogo.qtd_pistas; i++) {
 
@@ -134,24 +201,30 @@ tJogo LerJogo(FILE * config, FILE * personagens){
         if (inicioLinha == 'E' || inicioLinha == 'D') {
             // É pista
             // Ler direção:
-            jogo.pistas[i].direcao = inicioLinha;
+            direcao = inicioLinha;
 
             // Ler velocidade e num de carros:
-            fscanf(config, "%d %d", &jogo.pistas[i].velocidade, &jogo.pistas[i].num_carros);
+            fscanf(config, "%d %d", &velocidade, &num_carros);
 
             // Ler carros:
-            for (c = 0; c < jogo.pistas[i].num_carros; c++) {
-                fscanf(config, "%d", &jogo.pistas[i].carros[c].posicao);
+            for (c = 0; c < num_carros; c++) { // Trocar
+                fscanf(config, "%d", &posicao_carro);
+                carros[c] = InstanciarCarro(posicao_carro);
             }
+
+            jogo.pistas[i] = InstanciarPista(direcao, velocidade, num_carros, carros);
             
         } else {
-            jogo.pistas[i].direcao = '0';
-            jogo.pistas[i].num_carros = -1;
-            jogo.pistas[i].velocidade = -1;
+            // Pista vazia
+            direcao = '0';
+            num_carros = -1;
+            velocidade = -1;
+            jogo.pistas[i] = InstanciarPista(direcao, velocidade, num_carros, carros);
 
             if (inicioLinha == 'G') {
-                fscanf(config, "%d %d", &jogo.galinha.x, &jogo.galinha.vidas);          
-                jogo.galinha.y = jogo.qtd_pistas-1;
+                fscanf(config, "%d %d", &x, &vidas);          
+                y = jogo.qtd_pistas-1;
+                jogo.galinha = InstanciarGalinha(x, y, vidas);
             }
         }
         while (inicioLinha != '\n' && !feof(config)) {
@@ -160,22 +233,74 @@ tJogo LerJogo(FILE * config, FILE * personagens){
 
     }
 
-
     // Ler view personagens:
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 3; j++) {
             fscanf(personagens, "%c", &jogo.viewGalinha[i][j]);
         }
-        fscanf(personagens, "%*[^\n]\n");
+        fscanf(personagens, "%*[ \n]");
     }
 
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 3; j++) {
             fscanf(personagens, "%c", &jogo.viewCarro[i][j]);
         }
-        fscanf(personagens, "%*[^\n]\n");
+        fscanf(personagens, "%*[ \n]");
     }
+
+    // Definir mapa base
+    for (i = 0; i < (jogo.qtd_pistas*3)-1; i++) {
+        for (j = 0; j < jogo.largura_mapa; j++) {
+            if ((i+1)%3 != 0) {
+                jogo.mapa[i][j] = ' ';
+            } else {
+                if ((j+1)%3 != 0) {
+                    jogo.mapa[i][j] = '-';
+                } else {
+                    jogo.mapa[i][j] = ' ';
+                }
+            }
+        }
+    }
+    
 
     return jogo;
     
+}
+
+// Funções de tPista:
+tPista InstanciarPista(char direcao, int velocidade, int num_carros, tCarro carros[]){
+    tPista pista;
+    int i = 0;
+
+    pista.direcao = direcao;
+    pista.velocidade = velocidade;
+    pista.num_carros = num_carros;
+
+    for (i = 0; i < num_carros; i++) {
+        pista.carros[i] = carros[i];
+    }
+
+    return pista;
+}
+
+// Funções de tCarro:
+tCarro InstanciarCarro(int posicao){
+    tCarro carro;
+
+    carro.posicao = posicao;
+
+    return carro;
+
+}
+
+// Funções de tGalinha:
+tGalinha InstanciarGalinha(int x, int y, int vidas){
+    tGalinha galinha;
+
+    galinha.x = x;
+    galinha.y = y;
+    galinha.vidas = vidas;
+
+    return galinha;
 }

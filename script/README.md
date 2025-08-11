@@ -37,9 +37,9 @@ Então note que, toda vez que você quiser testar o seu código, o script dever�
                     ranking.txt
                     resumo.txt
                     saida.txt
+                config_inicial.txt
                 entrada.txt
-                inimigo.txt
-                mapa.txt
+                personagens.txt
             2/
                 saida/
                     estatisticas.txt
@@ -48,9 +48,9 @@ Então note que, toda vez que você quiser testar o seu código, o script dever�
                     ranking.txt
                     resumo.txt
                     saida.txt
+                config_inicial.txt
                 entrada.txt
-                inimigo.txt
-                mapa.txt
+                personagens.txt
             .
             .
             .
@@ -62,9 +62,9 @@ Então note que, toda vez que você quiser testar o seu código, o script dever�
                     ranking.txt
                     resumo.txt
                     saida.txt
+                config_inicial.txt
                 entrada.txt
-                inimigo.txt
-                mapa.txt
+                personagens.txt
 ```
 
  ### Estrutura dos diretórios de Resultados
@@ -75,22 +75,22 @@ Então note que, toda vez que você quiser testar o seu código, o script dever�
                 Casos/
                     1/
                         saida/
+                        config_inicial.txt
                         entrada.txt
-                        inimigo.txt
-                        mapa.txt
+                        personagens.txt
                     2/
                         saida/
+                        config_inicial.txt
                         entrada.txt
-                        inimigo.txt
-                        mapa.txt
+                        personagens.txt
                     .
                     .
                     .
                     x/
                         saida/
+                        config_inicial.txt
                         entrada.txt
-                        inimigo.txt
-                        mapa.txt
+                        personagens.txt
                 prog
                 result_compilation.txt
                 result_linking.txt
