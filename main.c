@@ -21,6 +21,8 @@ tPista InstanciarPista(char direcao, int velocidade, int num_carros, tCarro carr
 char ObtemDirecaoPista(tPista pista);
 int ObtemVelocidadePista(tPista pista);
 int ObtemNumCarrosPista(tPista pista);
+tCarro ObtemCarroPista(tPista pista, int index);
+tPista AndarCarrosPista(tPista pista, int tam_pista);
 
 typedef struct {
     int x;
@@ -33,8 +35,12 @@ tGalinha InstanciarGalinha(int x, int y, int vidas);
 int ObtemXGalinha(tGalinha galinha);
 int ObtemYGalinha(tGalinha galinha);
 int ObtemVidasGalinha(tGalinha galinha);
+//tJogo IrParaFrenteGalinha(tJogo jogo);
+//tJogo IrParaTrasGalinha(tJogo jogo);
 
 typedef struct {
+    int status;
+
     int animacao;
     int largura_mapa;
     int qtd_pistas;
@@ -45,16 +51,20 @@ typedef struct {
     tPista pistas[12];
     tGalinha galinha;
 
-    char mapa[35][100];
+    char mapa[35][102];
 
 } tJogo;
 
 tJogo LerJogo(FILE * config, FILE * personagens);
 void ImprimirMapaJogo(tJogo jogo);
+tJogo ProximoInstJogo(tJogo jogo);
+int ObtemStatusJogo(tJogo jogo);
 
 void Debugar(tJogo jogo);
 
 int main(int argc, char * argv[]){
+    char entrada;
+
     // Verificando se parâmetros foram passados:
     if (argc <= 1){
         printf("ERRO: Informe o diretorio com os arquivos de configuracao.");
@@ -86,6 +96,28 @@ int main(int argc, char * argv[]){
     fclose(configFile);
     fclose(personagensFile);
     Debugar(jogo);
+
+
+    while (ObtemStatusJogo(jogo) == 1) {
+        ImprimirMapaJogo(jogo);
+        // Criar LerEvento(jogo);
+
+        do {
+            scanf("%c", &entrada);
+        } while (entrada == '\n');
+        
+        if (entrada == ' ') {
+            jogo = ProximoInstJogo(jogo);
+        } else if (entrada == 'w') {
+            jogo = ProximoInstJogo(jogo);
+            //jogo = IrParaFrenteGalinha(jogo);
+        } else if (entrada == 's') {
+            jogo = ProximoInstJogo(jogo);
+            //jogo = IrParaTrasGalinha(jogo);
+        }
+
+    }
+    
     ImprimirMapaJogo(jogo);
     
     return 0;
@@ -127,10 +159,10 @@ void Debugar(tJogo jogo){
     
 
 }
-
 void ImprimirMapaJogo(tJogo jogo){
-    int i = 0, j = 0, i_pistas = 0, j_carros = 0;
+    int i = 0, j = 0, i_pistas = 0, j_carros = 0, posicao = 0, i_view = 0, j_view = 0, coluna = 0;
     char mapaAtual[(jogo.qtd_pistas*3)-1][jogo.largura_mapa];
+    tCarro carro;
 
     // Copiando mapa para ser alterado localmente:
     for (i = 0; i < (jogo.qtd_pistas*3)-1; i++) {
@@ -142,11 +174,37 @@ void ImprimirMapaJogo(tJogo jogo){
     // Alterando a cópia do mapa com os elementos nas posições atuais:
 
     // Percorrer pistas e ler os carros:
-    for (i_pistas = 0; i_pistas < jogo.qtd_pistas-1; i_pistas++) {
+    for (i_pistas = 0; i_pistas < jogo.qtd_pistas; i_pistas++) {
         // Verificar se pista é vazia:
-        if (jogo.pistas[i_pistas].direcao != '0') {
-            for (j_carros = 0; j_carros < jogo.pistas[i_pistas].num_carros; j_carros++) {
-                /* code */
+        if (ObtemDirecaoPista(jogo.pistas[i_pistas]) != '0') {
+            for (j_carros = 0; j_carros < ObtemNumCarrosPista(jogo.pistas[i_pistas]); j_carros++) {
+                carro = ObtemCarroPista(jogo.pistas[i_pistas], j_carros);
+                posicao = ObtemPosicaoCarro(carro);
+                
+                i = i_pistas*3; // linha em relação a pista:
+                j = posicao-2; // Começa no início do desenho
+                
+                for (i_view = 0; i_view < 2; i_view++) {
+                    for (j_view = 0; j_view < 3; j_view++) {
+                        mapaAtual[i+i_view][j+j_view] = jogo.viewCarro[i_view][j_view];
+                    }
+                }
+                
+            }
+
+        }
+        if (i_pistas == jogo.qtd_pistas-1) {
+            // Colocando galinha na última pista:
+
+            posicao = ObtemXGalinha(jogo.galinha);
+
+            i = i_pistas*3; // linha em relação a pista:
+            j = posicao-2; // Começa no início do desenho
+
+            for (i_view = 0; i_view < 2; i_view++) {
+                for (j_view = 0; j_view < 3; j_view++) {
+                    mapaAtual[i+i_view][j+j_view] = jogo.viewGalinha[i_view][j_view];
+                }
             }
         }
     }
@@ -174,7 +232,6 @@ void ImprimirMapaJogo(tJogo jogo){
     printf("|\n");
     
 }
-
 tJogo LerJogo(FILE * config, FILE * personagens){
     tJogo jogo;
     int i = 0, j = 0, c = 0;
@@ -182,6 +239,8 @@ tJogo LerJogo(FILE * config, FILE * personagens){
     int velocidade = 0, num_carros = 0, posicao_carro = 0;
     tCarro carros[10];
     int x = 0, y = 0, vidas = 0;
+
+    jogo.status = 1;
 
     fscanf(config, "%d", &jogo.animacao);
     fscanf(config, "%d %d", &jogo.largura_mapa, &jogo.qtd_pistas);
@@ -267,8 +326,31 @@ tJogo LerJogo(FILE * config, FILE * personagens){
     return jogo;
     
 }
+int ObtemStatusJogo(tJogo jogo){
+    return jogo.status;
+}
+
+tJogo ProximoInstJogo(tJogo jogo){
+    // Mudar posição dos carros
+    int i_pistas = 0;
+
+    for (i_pistas = 0; i_pistas < jogo.qtd_pistas; i_pistas++) {
+        // Verificar se pista é vazia:
+        if (ObtemDirecaoPista(jogo.pistas[i_pistas]) != '0') {
+            jogo.pistas[i_pistas] = AndarCarrosPista(jogo.pistas[i_pistas], jogo.largura_mapa);
+        }
+    }
+    
+    return jogo;
+}
 
 // Funções de tPista:
+int ObtemNumCarrosPista(tPista pista){
+    return pista.num_carros;
+}
+char ObtemDirecaoPista(tPista pista){
+    return pista.direcao;
+}
 tPista InstanciarPista(char direcao, int velocidade, int num_carros, tCarro carros[]){
     tPista pista;
     int i = 0;
@@ -279,6 +361,28 @@ tPista InstanciarPista(char direcao, int velocidade, int num_carros, tCarro carr
 
     for (i = 0; i < num_carros; i++) {
         pista.carros[i] = carros[i];
+    }
+
+    return pista;
+}
+tCarro ObtemCarroPista(tPista pista, int index){
+    return pista.carros[index];
+}
+int ObtemPosicaoCarro(tCarro carro){
+    return carro.posicao;
+}
+tPista AndarCarrosPista(tPista pista, int tam_pista){
+    int i_carros = 0, movimento = 0, posicao = 0;
+    if (pista.direcao == 'D') {
+        movimento = pista.velocidade;
+    } else if (pista.direcao == 'E') {
+        movimento = -pista.velocidade;
+    }
+    
+    for (i_carros = 0; i_carros < pista.num_carros; i_carros++) {
+        posicao = pista.carros[i_carros].posicao + movimento;
+        posicao = posicao%tam_pista+2;
+        pista.carros[i_carros].posicao = posicao;
     }
 
     return pista;
@@ -303,4 +407,7 @@ tGalinha InstanciarGalinha(int x, int y, int vidas){
     galinha.vidas = vidas;
 
     return galinha;
+}
+int ObtemXGalinha(tGalinha galinha) {
+    return galinha.x;
 }
