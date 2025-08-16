@@ -160,7 +160,7 @@ void Debugar(tJogo jogo){
 
 }
 void ImprimirMapaJogo(tJogo jogo){
-    int i = 0, j = 0, i_pistas = 0, j_carros = 0, posicao = 0, i_view = 0, j_view = 0, coluna = 0;
+    int i = 0, j = 0, i_pistas = 0, j_carros = 0, posicao = 0, i_view = 0, j_view = 0, coluna = 0, j_final = 0;
     char mapaAtual[(jogo.qtd_pistas*3)-1][jogo.largura_mapa];
     tCarro carro;
 
@@ -186,9 +186,13 @@ void ImprimirMapaJogo(tJogo jogo){
                 
                 for (i_view = 0; i_view < 2; i_view++) {
                     for (j_view = 0; j_view < 3; j_view++) {
-                        mapaAtual[i+i_view][j+j_view] = jogo.viewCarro[i_view][j_view];
+                        j_final = ((j + j_view) % jogo.largura_mapa + jogo.largura_mapa ) % jogo.largura_mapa;
+                        printf("i: %d; j: %d; ", i+i_view, j_final);
+                        mapaAtual[i+i_view][j_final] = jogo.viewCarro[i_view][j_view];
                     }
+                    
                 }
+                printf("\n");
                 
             }
 
@@ -202,10 +206,15 @@ void ImprimirMapaJogo(tJogo jogo){
             j = posicao-2; // Começa no início do desenho
 
             for (i_view = 0; i_view < 2; i_view++) {
+                printf("Galinha: ");
                 for (j_view = 0; j_view < 3; j_view++) {
-                    mapaAtual[i+i_view][j+j_view] = jogo.viewGalinha[i_view][j_view];
+                    j_final = ((j + j_view) % jogo.largura_mapa + jogo.largura_mapa ) % jogo.largura_mapa;
+                    printf("i: %d; j: %d; ", i+i_view, j_final);
+                    mapaAtual[i+i_view][j_final] = jogo.viewGalinha[i_view][j_view];
                 }
+                
             }
+            printf("\n");
         }
     }
     
@@ -329,7 +338,6 @@ tJogo LerJogo(FILE * config, FILE * personagens){
 int ObtemStatusJogo(tJogo jogo){
     return jogo.status;
 }
-
 tJogo ProximoInstJogo(tJogo jogo){
     // Mudar posição dos carros
     int i_pistas = 0;
@@ -381,7 +389,12 @@ tPista AndarCarrosPista(tPista pista, int tam_pista){
     
     for (i_carros = 0; i_carros < pista.num_carros; i_carros++) {
         posicao = pista.carros[i_carros].posicao + movimento;
-        posicao = posicao%tam_pista+2;
+        printf("Posição1: %d\n", posicao);
+        posicao = posicao%tam_pista;
+        if (posicao < 0) {
+            posicao = tam_pista + posicao;
+        }
+        printf("Posição2: %d\n", posicao);
         pista.carros[i_carros].posicao = posicao;
     }
 
