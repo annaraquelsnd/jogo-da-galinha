@@ -53,6 +53,9 @@ typedef struct {
 
     char mapa[35][102];
 
+    int pontos;
+    int iteracoes;
+
 } tJogo;
 
 tJogo LerJogo(FILE * config, FILE * personagens);
@@ -99,7 +102,7 @@ int main(int argc, char * argv[]){
     jogo = LerJogo(configFile, personagensFile);
     fclose(configFile);
     fclose(personagensFile);
-    Debugar(jogo);
+    //Debugar(jogo);
 
 
     while (ObtemStatusJogo(jogo) == 0) {
@@ -126,10 +129,10 @@ int main(int argc, char * argv[]){
 
     if (ObtemStatusJogo(jogo) == -1) {
         // perdeu
-        printf("Perdeu");
+        printf("Voce perdeu todas as vidas! Fim de jogo.");
     } else if (ObtemStatusJogo(jogo) == 1) {
         // ganhou
-        printf("Ganhou");
+        printf("Parabens! Voce atravessou todas as pistas e venceu!");
     } else {
         // erro
         printf("ERRO: Status jogo não existe");
@@ -234,7 +237,7 @@ void ImprimirMapaJogo(tJogo jogo){
     }
     
 
-
+    printf("Pontos: %d | Vidas: %d | Iteracoes: %d\n", jogo.pontos, ObtemVidasGalinha(jogo.galinha), jogo.iteracoes);
     printf("|");
     for (j = 0; j < jogo.largura_mapa; j++) {
         printf("-");
@@ -265,18 +268,19 @@ tJogo LerJogo(FILE * config, FILE * personagens){
     int x = 0, y = 0, vidas = 0;
 
     jogo.status = 0;
+    jogo.pontos = 0;
+    jogo.iteracoes = 0;
 
     fscanf(config, "%d", &jogo.animacao);
     fscanf(config, "%d %d", &jogo.largura_mapa, &jogo.qtd_pistas);
 
-    inicioLinha = fgetc(config);
-    printf("Char depois de qtdPistas: %c\n", inicioLinha);
+    fgetc(config); // Limpa \n depois de qtd_pistas
 
     for (i = 0; i < jogo.qtd_pistas; i++) {
 
         inicioLinha = fgetc(config);
 
-        printf("Inicio linha: %c\n", inicioLinha);
+        //printf("Inicio linha: %c\n", inicioLinha);
 
         if (inicioLinha == 'E' || inicioLinha == 'D') {
             // É pista
@@ -359,6 +363,7 @@ tJogo ProximoInstJogo(tJogo jogo){
         }
     }
     
+    jogo.iteracoes += 1;
     return jogo;
 }
 
@@ -376,6 +381,7 @@ tJogo IrParaFrenteGalinhaJogo(tJogo jogo){
     galinhaCopy.y -= 1;
 
     jogo = ProximoInstJogo(jogo);
+    jogo.pontos += 1;
     jogo = HouveColisaoGalinhaJogo(jogo, galinhaCopy);
 
     return jogo;
@@ -437,6 +443,7 @@ tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
     if (colisao == 1) {
         galinha.vidas -= 1;
         galinha.y = jogo.qtd_pistas-1;
+        jogo.pontos = 0;
 
         if (ObtemVidasGalinha(galinha) == 0) {
             jogo.status = -1;
@@ -448,13 +455,12 @@ tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
     } else {
         if (galinha.y == 0) {
             jogo.status = 1;
+            jogo.pontos += 10;
         }
 
         jogo.galinha = galinha;
         return jogo;
     }
-
-
     
 }
 
