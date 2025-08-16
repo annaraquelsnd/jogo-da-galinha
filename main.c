@@ -39,7 +39,7 @@ int ObtemVidasGalinha(tGalinha galinha){
 }
 
 typedef struct {
-    int status; // 0 = em andamento; 1 = ganhou; -1 = perdeu;
+    int status; // 0 = em andamento; 1 = ganhou; -1 = perdeu; -2 = erro;
 
     int animacao;
     int largura_mapa;
@@ -58,6 +58,7 @@ typedef struct {
 
 } tJogo;
 
+tJogo AcessarArquivosELerJogo(int argc, char * argv[], tJogo jogo);
 tJogo LerJogo(FILE * config, FILE * personagens);
 void ImprimirMapaJogo(tJogo jogo);
 tJogo ProximoInstJogo(tJogo jogo);
@@ -71,38 +72,9 @@ void Debugar(tJogo jogo);
 
 int main(int argc, char * argv[]){
     char entrada;
-
-    // Verificando se parâmetros foram passados:
-    if (argc <= 1){
-        printf("ERRO: Informe o diretorio com os arquivos de configuracao.");
-        return 1;
-    }
-
-    // Declaração de variáveis:
     tJogo jogo;
-    FILE * configFile;
-    FILE * personagensFile;
-    char diretorio[1000];
 
-    // Lendo arquivos:
-    sprintf(diretorio, "%s/config_inicial.txt", argv[1]);
-    configFile = fopen(diretorio, "r");
-    if(!configFile) {
-        printf("ERRO: Nao foi possivel abrir o arquivo '%s.'", diretorio);
-        return 1;
-    }
-
-    sprintf(diretorio, "%s/personagens.txt", argv[1]);
-    personagensFile = fopen(diretorio, "r");
-    if(!personagensFile) {
-        printf("ERRO: Nao foi possivel abrir o arquivo '%s.'", diretorio);
-        return 1;
-    } 
-
-    jogo = LerJogo(configFile, personagensFile);
-    fclose(configFile);
-    fclose(personagensFile);
-    //Debugar(jogo);
+    jogo = AcessarArquivosELerJogo(argc, argv, jogo);
 
 
     while (ObtemStatusJogo(jogo) == 0) {
@@ -133,9 +105,6 @@ int main(int argc, char * argv[]){
     } else if (ObtemStatusJogo(jogo) == 1) {
         // ganhou
         printf("Parabens! Voce atravessou todas as pistas e venceu!");
-    } else {
-        // erro
-        printf("ERRO: Status jogo não existe");
     }
     
     return 0;
@@ -259,6 +228,45 @@ void ImprimirMapaJogo(tJogo jogo){
     printf("|\n");
     
 }
+
+tJogo AcessarArquivosELerJogo(int argc, char * argv[], tJogo jogo){
+    
+    // Verificando se parâmetros foram passados:
+    if (argc <= 1){
+        printf("ERRO: Informe o diretorio com os arquivos de configuracao.");
+        jogo.status = -2;
+        return jogo;
+    }
+
+    FILE * configFile;
+    FILE * personagensFile;
+    char diretorio[1000];
+
+    // Lendo arquivos:
+    sprintf(diretorio, "%s/config_inicial.txt", argv[1]);
+    configFile = fopen(diretorio, "r");
+    if(!configFile) {
+        printf("ERRO: Nao foi possivel abrir o arquivo '%s.'", diretorio);
+        jogo.status = -2;
+        return jogo;
+    }
+
+    sprintf(diretorio, "%s/personagens.txt", argv[1]);
+    personagensFile = fopen(diretorio, "r");
+    if(!personagensFile) {
+        printf("ERRO: Nao foi possivel abrir o arquivo '%s.'", diretorio);
+        jogo.status = -2;
+        return jogo;
+    } 
+
+    jogo = LerJogo(configFile, personagensFile);
+    fclose(configFile);
+    fclose(personagensFile);
+
+    return jogo;
+
+}
+
 tJogo LerJogo(FILE * config, FILE * personagens){
     tJogo jogo;
     int i = 0, j = 0, c = 0;
