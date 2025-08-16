@@ -34,9 +34,7 @@ typedef struct {
 tGalinha InstanciarGalinha(int x, int y, int vidas);
 int ObtemXGalinha(tGalinha galinha);
 int ObtemYGalinha(tGalinha galinha);
-int ObtemVidasGalinha(tGalinha galinha){
-    return galinha.vidas;
-}
+int ObtemVidasGalinha(tGalinha galinha);
 
 typedef struct {
     int status; // 0 = em andamento; 1 = ganhou; -1 = perdeu; -2 = erro;
@@ -63,54 +61,36 @@ tJogo LerJogo(FILE * config, FILE * personagens);
 void ImprimirMapaJogo(tJogo jogo);
 tJogo ProximoInstJogo(tJogo jogo);
 int ObtemStatusJogo(tJogo jogo);
+tJogo LerEventoJogo(tJogo jogo);
 tJogo FicarParadaGalinhaJogo(tJogo jogo);
 tJogo IrParaFrenteGalinhaJogo(tJogo jogo);
 tJogo IrParaTrasGalinhaJogo(tJogo jogo);
 tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha);
+void VerificarStatusFimJogo(tJogo jogo);
 
 void Debugar(tJogo jogo);
 
 int main(int argc, char * argv[]){
-    char entrada;
     tJogo jogo;
 
+    // Lendo arquivos e Instanciando jogo:
     jogo = AcessarArquivosELerJogo(argc, argv, jogo);
 
-
+    // Loop para rodar jogo:
     while (ObtemStatusJogo(jogo) == 0) {
         ImprimirMapaJogo(jogo);
-        // Criar LerEvento(jogo);
-
-        do {
-            scanf("%c", &entrada);
-        } while (entrada == '\n');
-        
-        if (entrada == ' ') {
-            jogo =  FicarParadaGalinhaJogo(jogo);
-            // Verificar se houve colisão
-        } else if (entrada == 'w') {
-            jogo = IrParaFrenteGalinhaJogo(jogo);
-        } else if (entrada == 's') {
-            jogo = IrParaTrasGalinhaJogo(jogo);
-        }
-
-        //Debugar(jogo);
-
+        jogo = LerEventoJogo(jogo);
     }
     ImprimirMapaJogo(jogo);
 
-    if (ObtemStatusJogo(jogo) == -1) {
-        // perdeu
-        printf("Voce perdeu todas as vidas! Fim de jogo.");
-    } else if (ObtemStatusJogo(jogo) == 1) {
-        // ganhou
-        printf("Parabens! Voce atravessou todas as pistas e venceu!");
-    }
+    // Fim de jogo:
+    VerificarStatusFimJogo(jogo);
     
     return 0;
 }
 
 // Funções de tJogo:
+
 void Debugar(tJogo jogo){
     int i = 0, j = 0, c = 0;
 
@@ -228,7 +208,6 @@ void ImprimirMapaJogo(tJogo jogo){
     printf("|\n");
     
 }
-
 tJogo AcessarArquivosELerJogo(int argc, char * argv[], tJogo jogo){
     
     // Verificando se parâmetros foram passados:
@@ -266,7 +245,6 @@ tJogo AcessarArquivosELerJogo(int argc, char * argv[], tJogo jogo){
     return jogo;
 
 }
-
 tJogo LerJogo(FILE * config, FILE * personagens){
     tJogo jogo;
     int i = 0, j = 0, c = 0;
@@ -374,7 +352,24 @@ tJogo ProximoInstJogo(tJogo jogo){
     jogo.iteracoes += 1;
     return jogo;
 }
+tJogo LerEventoJogo(tJogo jogo){
+    char entrada;
+    
+    do {
+        scanf("%c", &entrada);
+    } while (entrada == '\n');
+    
+    if (entrada == ' ') {
+        jogo =  FicarParadaGalinhaJogo(jogo);
+        // Verificar se houve colisão
+    } else if (entrada == 'w') {
+        jogo = IrParaFrenteGalinhaJogo(jogo);
+    } else if (entrada == 's') {
+        jogo = IrParaTrasGalinhaJogo(jogo);
+    }
 
+    return jogo;
+}
 tJogo FicarParadaGalinhaJogo(tJogo jogo){
 
     jogo = ProximoInstJogo(jogo);
@@ -383,7 +378,6 @@ tJogo FicarParadaGalinhaJogo(tJogo jogo){
     return jogo;
 
 }
-
 tJogo IrParaFrenteGalinhaJogo(tJogo jogo){
     tGalinha galinhaCopy = jogo.galinha;
     galinhaCopy.y -= 1;
@@ -395,8 +389,7 @@ tJogo IrParaFrenteGalinhaJogo(tJogo jogo){
     return jogo;
     
 }
-
-tJogo IrParaTrasGalinhaJogo(tJogo jogo) {
+tJogo IrParaTrasGalinhaJogo(tJogo jogo){
     tGalinha galinhaCopy = jogo.galinha;
     if (galinhaCopy.y < jogo.qtd_pistas-1) {
         galinhaCopy.y += 1;
@@ -408,7 +401,6 @@ tJogo IrParaTrasGalinhaJogo(tJogo jogo) {
     return jogo;
 
 }
-
 tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
     // Verifica e executa consequencias de colisão/não colisão
 
@@ -470,6 +462,15 @@ tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
         return jogo;
     }
     
+}
+void VerificarStatusFimJogo(tJogo jogo){
+    if (ObtemStatusJogo(jogo) == -1) {
+        // perdeu
+        printf("Voce perdeu todas as vidas! Fim de jogo.\n");
+    } else if (ObtemStatusJogo(jogo) == 1) {
+        // ganhou
+        printf("Parabens! Voce atravessou todas as pistas e venceu!\n");
+    }
 }
 
 // Funções de tPista:
@@ -544,7 +545,10 @@ tGalinha InstanciarGalinha(int x, int y, int vidas){
 
     return galinha;
 }
-int ObtemXGalinha(tGalinha galinha) {
+int ObtemVidasGalinha(tGalinha galinha){
+    return galinha.vidas;
+}
+int ObtemXGalinha(tGalinha galinha){
     return galinha.x;
 }
 int ObtemYGalinha(tGalinha galinha){
