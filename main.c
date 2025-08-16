@@ -34,12 +34,12 @@ typedef struct {
 tGalinha InstanciarGalinha(int x, int y, int vidas);
 int ObtemXGalinha(tGalinha galinha);
 int ObtemYGalinha(tGalinha galinha);
-int ObtemVidasGalinha(tGalinha galinha);
-//tJogo IrParaFrenteGalinha(tJogo jogo);
-//tJogo IrParaTrasGalinha(tJogo jogo);
+int ObtemVidasGalinha(tGalinha galinha){
+    return galinha.vidas;
+}
 
 typedef struct {
-    int status;
+    int status; // 0 = em andamento; 1 = ganhou; -1 = perdeu;
 
     int animacao;
     int largura_mapa;
@@ -59,6 +59,10 @@ tJogo LerJogo(FILE * config, FILE * personagens);
 void ImprimirMapaJogo(tJogo jogo);
 tJogo ProximoInstJogo(tJogo jogo);
 int ObtemStatusJogo(tJogo jogo);
+tJogo FicarParadaGalinhaJogo(tJogo jogo);
+tJogo IrParaFrenteGalinhaJogo(tJogo jogo);
+tJogo IrParaTrasGalinhaJogo(tJogo jogo);
+tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha);
 
 void Debugar(tJogo jogo);
 
@@ -98,7 +102,7 @@ int main(int argc, char * argv[]){
     Debugar(jogo);
 
 
-    while (ObtemStatusJogo(jogo) == 1) {
+    while (ObtemStatusJogo(jogo) == 0) {
         ImprimirMapaJogo(jogo);
         // Criar LerEvento(jogo);
 
@@ -107,18 +111,29 @@ int main(int argc, char * argv[]){
         } while (entrada == '\n');
         
         if (entrada == ' ') {
-            jogo = ProximoInstJogo(jogo);
+            jogo =  FicarParadaGalinhaJogo(jogo);
+            // Verificar se houve colisão
         } else if (entrada == 'w') {
-            jogo = ProximoInstJogo(jogo);
-            //jogo = IrParaFrenteGalinha(jogo);
+            jogo = IrParaFrenteGalinhaJogo(jogo);
         } else if (entrada == 's') {
-            jogo = ProximoInstJogo(jogo);
-            //jogo = IrParaTrasGalinha(jogo);
+            jogo = IrParaTrasGalinhaJogo(jogo);
         }
 
+        //Debugar(jogo);
+
     }
-    
     ImprimirMapaJogo(jogo);
+
+    if (ObtemStatusJogo(jogo) == -1) {
+        // perdeu
+        printf("Perdeu");
+    } else if (ObtemStatusJogo(jogo) == 1) {
+        // ganhou
+        printf("Ganhou");
+    } else {
+        // erro
+        printf("ERRO: Status jogo não existe");
+    }
     
     return 0;
 }
@@ -187,35 +202,34 @@ void ImprimirMapaJogo(tJogo jogo){
                 for (i_view = 0; i_view < 2; i_view++) {
                     for (j_view = 0; j_view < 3; j_view++) {
                         j_final = ((j + j_view) % jogo.largura_mapa + jogo.largura_mapa ) % jogo.largura_mapa;
-                        printf("i: %d; j: %d; ", i+i_view, j_final);
+                        //printf("i: %d; j: %d; ", i+i_view, j_final);
                         mapaAtual[i+i_view][j_final] = jogo.viewCarro[i_view][j_view];
                     }
                     
                 }
-                printf("\n");
+                //printf("\n");
                 
             }
 
         }
-        if (i_pistas == jogo.qtd_pistas-1) {
-            // Colocando galinha na última pista:
 
-            posicao = ObtemXGalinha(jogo.galinha);
+        // Colocando galinha:
+        posicao = ObtemXGalinha(jogo.galinha);
+        int pistaGalinha = ObtemYGalinha(jogo.galinha);
 
-            i = i_pistas*3; // linha em relação a pista:
-            j = posicao-2; // Começa no início do desenho
+        i = pistaGalinha*3; // linha em relação a pista:
+        j = posicao-2; // Começa no início do desenho
 
-            for (i_view = 0; i_view < 2; i_view++) {
-                printf("Galinha: ");
-                for (j_view = 0; j_view < 3; j_view++) {
-                    j_final = ((j + j_view) % jogo.largura_mapa + jogo.largura_mapa ) % jogo.largura_mapa;
-                    printf("i: %d; j: %d; ", i+i_view, j_final);
-                    mapaAtual[i+i_view][j_final] = jogo.viewGalinha[i_view][j_view];
-                }
-                
+        for (i_view = 0; i_view < 2; i_view++) {
+            //printf("Galinha: ");
+            for (j_view = 0; j_view < 3; j_view++) {
+                j_final = ((j + j_view) % jogo.largura_mapa + jogo.largura_mapa ) % jogo.largura_mapa;
+                //printf("i: %d; j: %d; ", i+i_view, j_final);
+                mapaAtual[i+i_view][j_final] = jogo.viewGalinha[i_view][j_view];
             }
-            printf("\n");
+            
         }
+        //printf("\n");
     }
     
 
@@ -249,7 +263,7 @@ tJogo LerJogo(FILE * config, FILE * personagens){
     tCarro carros[10];
     int x = 0, y = 0, vidas = 0;
 
-    jogo.status = 1;
+    jogo.status = 0;
 
     fscanf(config, "%d", &jogo.animacao);
     fscanf(config, "%d %d", &jogo.largura_mapa, &jogo.qtd_pistas);
@@ -352,6 +366,105 @@ tJogo ProximoInstJogo(tJogo jogo){
     return jogo;
 }
 
+tJogo FicarParadaGalinhaJogo(tJogo jogo){
+
+    jogo = ProximoInstJogo(jogo);
+    jogo = HouveColisaoGalinhaJogo(jogo, jogo.galinha);
+
+    return jogo;
+
+}
+
+tJogo IrParaFrenteGalinhaJogo(tJogo jogo){
+    tGalinha galinhaCopy = jogo.galinha;
+    galinhaCopy.y -= 1;
+
+    jogo = ProximoInstJogo(jogo);
+    jogo = HouveColisaoGalinhaJogo(jogo, galinhaCopy);
+
+    return jogo;
+    
+}
+
+tJogo IrParaTrasGalinhaJogo(tJogo jogo) {
+    tGalinha galinhaCopy = jogo.galinha;
+    if (galinhaCopy.y < jogo.qtd_pistas-1) {
+        galinhaCopy.y += 1;
+    }
+
+    jogo = ProximoInstJogo(jogo);
+    jogo = HouveColisaoGalinhaJogo(jogo, galinhaCopy);
+
+    return jogo;
+
+}
+
+tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
+    // Verifica e executa consequencias de colisão/não colisão
+
+    int pistaGalinha = galinha.y;
+    printf("Pista galinha: %d\n", pistaGalinha);
+    int i = 0, g_ocup = 0, c_ocup = 0, colisao = 0, colisao_carro = 0;
+
+    int ocupacaoGalinha[3] = {galinha.x-1, galinha.x, galinha.x+1};
+    printf("Ocupação galinha: %d, %d, %d\n", galinha.x-1, galinha.x, galinha.x+1);
+    int ocupacaoCarro[3];
+
+    int qtd_carros = ObtemNumCarrosPista(jogo.pistas[pistaGalinha]);
+
+    for (i = 0; i < qtd_carros; i++) {
+        colisao_carro = 0;
+
+        int ocupacaoCarro[3] = {ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))-1, ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i)), ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))+1};
+        printf("Ocupação carro %d: %d, %d, %d\n", i, ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))-1, ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i)), ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))+1);
+        for (g_ocup = 0; g_ocup < 3; g_ocup++) {
+            for (c_ocup = 0; c_ocup < 3; c_ocup++) {
+                if (ocupacaoGalinha[g_ocup] == ocupacaoCarro[c_ocup]) {
+                    // Printar no resumo
+                    colisao_carro = 1;
+                    //printf("Colisão do carro %d com Galinha. %d %d.\n", i, ocupacaoCarro[c_ocup], ocupacaoGalinha[g_ocup]);
+                    break;
+                }
+                
+            }
+
+            if (colisao_carro == 1) {
+                colisao = 1;
+                break;
+            }
+        }
+        
+    }
+
+    // Se colisao == 1: Houve colisão; Senão: Não houve colisão.
+
+    printf("Houve colisão? %d\n", colisao);
+
+    if (colisao == 1) {
+        galinha.vidas -= 1;
+        galinha.y = jogo.qtd_pistas-1;
+
+        if (ObtemVidasGalinha(galinha) == 0) {
+            jogo.status = -1;
+        }
+
+        jogo.galinha = galinha;
+        Debugar(jogo);
+        return jogo;
+        
+    } else {
+        if (galinha.y == 0) {
+            jogo.status = 1;
+        }
+
+        jogo.galinha = galinha;
+        Debugar(jogo);
+        return jogo;
+    }
+
+
+    
+}
 // Funções de tPista:
 int ObtemNumCarrosPista(tPista pista){
     return pista.num_carros;
@@ -389,12 +502,12 @@ tPista AndarCarrosPista(tPista pista, int tam_pista){
     
     for (i_carros = 0; i_carros < pista.num_carros; i_carros++) {
         posicao = pista.carros[i_carros].posicao + movimento;
-        printf("Posição1: %d\n", posicao);
+        //printf("Posição1: %d\n", posicao);
         posicao = posicao%tam_pista;
         if (posicao < 0) {
             posicao = tam_pista + posicao;
         }
-        printf("Posição2: %d\n", posicao);
+        //printf("Posição2: %d\n", posicao);
         pista.carros[i_carros].posicao = posicao;
     }
 
@@ -423,4 +536,7 @@ tGalinha InstanciarGalinha(int x, int y, int vidas){
 }
 int ObtemXGalinha(tGalinha galinha) {
     return galinha.x;
+}
+int ObtemYGalinha(tGalinha galinha){
+    return galinha.y;
 }
