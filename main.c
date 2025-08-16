@@ -137,6 +137,7 @@ int main(int argc, char * argv[]){
     
     return 0;
 }
+
 // Funções de tJogo:
 void Debugar(tJogo jogo){
     int i = 0, j = 0, c = 0;
@@ -268,17 +269,14 @@ tJogo LerJogo(FILE * config, FILE * personagens){
     fscanf(config, "%d", &jogo.animacao);
     fscanf(config, "%d %d", &jogo.largura_mapa, &jogo.qtd_pistas);
 
-    // Primeira pista vazia
-    direcao = '0';
-    num_carros = -1;
-    velocidade = -1;
-    jogo.pistas[i] = InstanciarPista(direcao, velocidade, num_carros, carros);
+    inicioLinha = fgetc(config);
+    printf("Char depois de qtdPistas: %c\n", inicioLinha);
 
-    for (i = 1; i < jogo.qtd_pistas; i++) {
+    for (i = 0; i < jogo.qtd_pistas; i++) {
 
-        do {
-            fscanf(config, "%c", &inicioLinha);
-        } while (inicioLinha == '\n');
+        inicioLinha = fgetc(config);
+
+        printf("Inicio linha: %c\n", inicioLinha);
 
         if (inicioLinha == 'E' || inicioLinha == 'D') {
             // É pista
@@ -295,6 +293,7 @@ tJogo LerJogo(FILE * config, FILE * personagens){
             }
 
             jogo.pistas[i] = InstanciarPista(direcao, velocidade, num_carros, carros);
+            fgetc(config);
             
         } else {
             // Pista vazia
@@ -308,9 +307,6 @@ tJogo LerJogo(FILE * config, FILE * personagens){
                 y = jogo.qtd_pistas-1;
                 jogo.galinha = InstanciarGalinha(x, y, vidas);
             }
-        }
-        while (inicioLinha != '\n' && !feof(config)) {
-            fscanf(config, "%c", &inicioLinha);
         }
 
     }
@@ -403,11 +399,11 @@ tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
     // Verifica e executa consequencias de colisão/não colisão
 
     int pistaGalinha = galinha.y;
-    printf("Pista galinha: %d\n", pistaGalinha);
+    //printf("Pista galinha: %d\n", pistaGalinha);
     int i = 0, g_ocup = 0, c_ocup = 0, colisao = 0, colisao_carro = 0;
 
     int ocupacaoGalinha[3] = {galinha.x-1, galinha.x, galinha.x+1};
-    printf("Ocupação galinha: %d, %d, %d\n", galinha.x-1, galinha.x, galinha.x+1);
+    //printf("Ocupação galinha: %d, %d, %d\n", galinha.x-1, galinha.x, galinha.x+1);
     int ocupacaoCarro[3];
 
     int qtd_carros = ObtemNumCarrosPista(jogo.pistas[pistaGalinha]);
@@ -416,7 +412,7 @@ tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
         colisao_carro = 0;
 
         int ocupacaoCarro[3] = {ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))-1, ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i)), ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))+1};
-        printf("Ocupação carro %d: %d, %d, %d\n", i, ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))-1, ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i)), ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))+1);
+        //printf("Ocupação carro %d: %d, %d, %d\n", i, ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))-1, ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i)), ObtemPosicaoCarro(ObtemCarroPista(jogo.pistas[pistaGalinha], i))+1);
         for (g_ocup = 0; g_ocup < 3; g_ocup++) {
             for (c_ocup = 0; c_ocup < 3; c_ocup++) {
                 if (ocupacaoGalinha[g_ocup] == ocupacaoCarro[c_ocup]) {
@@ -438,8 +434,6 @@ tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
 
     // Se colisao == 1: Houve colisão; Senão: Não houve colisão.
 
-    printf("Houve colisão? %d\n", colisao);
-
     if (colisao == 1) {
         galinha.vidas -= 1;
         galinha.y = jogo.qtd_pistas-1;
@@ -449,7 +443,6 @@ tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
         }
 
         jogo.galinha = galinha;
-        Debugar(jogo);
         return jogo;
         
     } else {
@@ -458,14 +451,15 @@ tJogo HouveColisaoGalinhaJogo(tJogo jogo, tGalinha galinha){
         }
 
         jogo.galinha = galinha;
-        Debugar(jogo);
         return jogo;
     }
 
 
     
 }
+
 // Funções de tPista:
+
 int ObtemNumCarrosPista(tPista pista){
     return pista.num_carros;
 }
@@ -515,6 +509,7 @@ tPista AndarCarrosPista(tPista pista, int tam_pista){
 }
 
 // Funções de tCarro:
+
 tCarro InstanciarCarro(int posicao){
     tCarro carro;
 
@@ -525,6 +520,7 @@ tCarro InstanciarCarro(int posicao){
 }
 
 // Funções de tGalinha:
+
 tGalinha InstanciarGalinha(int x, int y, int vidas){
     tGalinha galinha;
 
